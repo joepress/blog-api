@@ -7,11 +7,11 @@ const jsonParser = bodyParser.json();
 const {BlogPosts} = require('./models');
 
 BlogPosts.create(
-	'blogpost1','Lorem ipsum dolor sit amet, consectetur adipiscing elit.','John Ray','04/17/1995'
+	'blogpost1','Lorem ipsum dolor sit amet, consectetur adipiscing elit.','John Ray','04/17/1990'
 	);
 
 BlogPosts.create(
-	'blogpost2','Lorem ipsum dolor sit amet, consectetur adipiscing elit.','Billy Stump','04/17/1995'
+	'blogpost2','Lorem ipsum dolor sit amet, consectetur adipiscing elit.','Billy Stump','04/17/1993'
 	);
 
 BlogPosts.create(
