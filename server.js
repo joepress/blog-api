@@ -1,49 +1,167 @@
 const express = require('express');
-const router = express.Router();
 
 const morgan = require('morgan');
-const bodyparser = require('body-parser');
+const bodyParser = require('body-parser');
 
 const app = express();
 
-const blogPostRouter = require('./blogPostRouter');
+const mongoose = require('mongoose');
+
+// Mongoose internally uses a promise-like object,
+// but its better to make Mongoose use built in es6 promises
+mongoose.Promise = global.Promise;
+
+// config.js is where we control constants for entire
+// app like PORT and DATABASE_URL
+const {PORT, DATABASE_URL} = require('./config');
+const {BlogPost} = require('./models');
 
 
+app.use(bodyParser.json());
 
 
-app.use('/blog-posts', blogPostRouter);
+// GET requests to /restaurants => return 10 restaurants
+app.get('/blogposts', (req, res) => {
+    const filters = {};
+    const queryableFields = ['author', 'title', 'created'];
+    queryableFields.forEach(field => {
+        if (req.query[field]) {
+            filters[field] = req.query[field];
+        }
+    });
+    BlogPost
+        .find(filters)
+        .exec()
+        .then(BlogPosts => res.json(
+            BlogPosts.map(blogpost => blogpost.apiRepr())
+        ))
+        .catch(err => {
+            console.error(err);
+            res.status(500).json({message: 'Internal server error'});
+        });
+});
+
+// can also request by ID
+app.get('/blogposts/:id', (req, res) => {
+  BlogPost
+    // this is a convenience method Mongoose provides for searching
+    // by the object _id property
+    .findById(req.params.id)
+    .exec()
+    .then(blogpost =>res.json(blogpost.apiRepr()))
+    .catch(err => {
+      console.error(err);
+        res.status(500).json({message: 'Internal server error'});
+    });
+});
+
+
+app.post('/blogposts', (req, res) => {
+
+  const requiredFields = ['title', 'content', 'author'];
+  for (let i=0; i<requiredFields.length; i++) {
+    const field = requiredFields[i];
+    if (!(field in req.body)) {
+      const message = `Missing \`${field}\` in request body`;
+      console.error(message);
+      return res.status(400).send(message);
+    }
+  }
+
+  BlogPost
+    .create({
+      title: req.body.title,
+      content: req.body.content,
+      author: req.body.author,
+      created: req.body.created,
+    })
+    .then(
+      blogpost => res.status(201).json(blogpost.apiRepr()))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({message: 'Internal server error'});
+    });
+});
+
+
+app.put('/blogposts/:id', (req, res) => {
+  // ensure that the id in the request path and the one in request body match
+  if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
+    const message = (
+      `Request path id (${req.params.id}) and request body id ` +
+      `(${req.body.id}) must match`);
+    console.error(message);
+    res.status(400).json({message: message});
+  }
+
+  // we only support a subset of fields being updateable.
+  // if the user sent over any of the updatableFields, we udpate those values
+  // in document
+  const toUpdate = {};
+  const updateableFields = ['title', 'content'];
+
+  updateableFields.forEach(field => {
+    if (field in req.body) {
+      toUpdate[field] = req.body[field];
+    }
+  });
+
+  BlogPost
+    // all key/value pairs in toUpdate will be updated -- that's what `$set` does
+    .findByIdAndUpdate(req.params.id, {$set: toUpdate})
+    .exec()
+    .then(blogpost => res.status(204).end())
+    .catch(err => res.status(500).json({message: 'Internal server error'}));
+});
+
+app.delete('/blog-posts/:id', (req, res) => {
+  BlogPost
+    .findByIdAndRemove(req.params.id)
+    .exec()
+    .then(blogpost => res.status(204).end())
+    .catch(err => res.status(500).json({message: 'Internal server error'}));
+});
+
+// catch-all endpoint if client makes request to non-existent endpoint
+app.use('*', function(req, res) {
+  res.status(404).json({message: 'Not Found'});
+});
 
 let server;
 
-// this function starts our server and returns a Promise.
-// In our test code, we need a way of asynchronously starting
-// our server, since we'll be dealing with promises there.
-function runServer() {
-  const port = process.env.PORT || 8080;
+// this function connects to our database, then starts the server
+function runServer(databaseUrl=DATABASE_URL, port=PORT) {
+
   return new Promise((resolve, reject) => {
-    server = app.listen(port, () => {
-      console.log(`Your app is listening on port ${port}`);
-      resolve(server);
-    }).on('error', err => {
-      reject(err)
+    mongoose.connect(databaseUrl, err => {
+      if (err) {
+        return reject(err);
+      }
+      server = app.listen(port, () => {
+        console.log(`Your app is listening on port ${port}`);
+        resolve();
+      })
+      .on('error', err => {
+        mongoose.disconnect();
+        reject(err);
+      });
     });
   });
 }
 
-// like `runServer`, this function also needs to return a promise.
-// `server.close` does not return a promise on its own, so we manually
-// create one.
+// this function closes the server, and returns a promise. we'll
+// use it in our integration tests later.
 function closeServer() {
-  return new Promise((resolve, reject) => {
-    console.log('Closing server');
-    server.close(err => {
-      if (err) {
-        reject(err);
-        // so we don't also call `resolve()`
-        return;
-      }
-      resolve();
-    });
+  return mongoose.disconnect().then(() => {
+     return new Promise((resolve, reject) => {
+       console.log('Closing server');
+       server.close(err => {
+           if (err) {
+               return reject(err);
+           }
+           resolve();
+       });
+     });
   });
 }
 
