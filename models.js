@@ -9,7 +9,7 @@ const blogPostSchema = mongoose.Schema({
     lastName: String,
     firstName: String,
     },
-  created: {type: Date, required: false}
+  created: {type: Date, default: Date.now}
 });
 
 

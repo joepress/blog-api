@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 
 
 
-// GET requests to /restaurants => return 10 restaurants
+
 app.get('/BlogPost', (req, res) => {
     const filters = {};
     const queryableFields = ['author', 'title', 'created'];
@@ -29,8 +29,8 @@ app.get('/BlogPost', (req, res) => {
     BlogPost
         .find(filters)
         .exec()
-        .then(BlogPosts => res.json(
-            BlogPosts.map(blogpost => blogpost.apiRepr())
+        .then(posts => res.json(
+            BlogPosts.map(post => post.apiRepr())
         ))
         .catch(err => {
             console.error(err);
@@ -45,7 +45,7 @@ app.get('/BlogPost/:id', (req, res) => {
         // by the object _id property
         .findById(req.params.id)
         .exec()
-        .then(blogpost => res.json(blogpost.apiRepr()))
+        .then(post => res.json(post.apiRepr()))
         .catch(err => {
             console.error(err);
             res.status(500).json({ message: 'Internal server error' });
@@ -72,8 +72,7 @@ app.post('/BlogPost', (req, res) => {
             author: req.body.author,
             created: req.body.created,
         })
-        .then(
-            blogpost => res.status(201).json(blogpost.apiRepr()))
+        .then(blogpost => res.status(201).json(blogpost.apiRepr()))
         .catch(err => {
             console.error(err);
             res.status(500).json({ message: 'Internal server error' });
