@@ -29,8 +29,7 @@ app.get('/BlogPost', (req, res) => {
     BlogPost
         .find(filters)
         .exec()
-        .then(posts => res.json(
-            BlogPosts.map(post => post.apiRepr())
+        .then(posts => res.json(posts.map(post => post.apiRepr())
         ))
         .catch(err => {
             console.error(err);
