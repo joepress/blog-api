@@ -44,7 +44,7 @@ app.get('/blogpost/:id', (req, res) => {
         // by the object _id property
         .findById(req.params.id)
         .exec()
-        .then(post => res.json(post.apiRepr()))
+        .then(posts => res.json(posts.apiRepr()))
         .catch(err => {
             console.error(err);
             res.status(500).json({ message: 'Internal server error' });
