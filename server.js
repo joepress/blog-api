@@ -18,7 +18,7 @@ app.use(bodyParser.json());
 
 
 
-app.get('/BlogPost', (req, res) => {
+app.get('/blogpost', (req, res) => {
     const filters = {};
     const queryableFields = ['author', 'title', 'created'];
     queryableFields.forEach(field => {
@@ -38,7 +38,7 @@ app.get('/BlogPost', (req, res) => {
 });
 
 // can also request by ID
-app.get('/BlogPost/:id', (req, res) => {
+app.get('/blogpost/:id', (req, res) => {
     BlogPost
         // this is a convenience method Mongoose provides for searching
         // by the object _id property
@@ -52,7 +52,7 @@ app.get('/BlogPost/:id', (req, res) => {
 });
 
 
-app.post('/BlogPost', (req, res) => {
+app.post('/blogpost', (req, res) => {
 
     const requiredFields = ['title', 'content', 'author'];
     for (let i = 0; i < requiredFields.length; i++) {
@@ -79,7 +79,7 @@ app.post('/BlogPost', (req, res) => {
 });
 
 
-app.put('/BlogPost/:id', (req, res) => {
+app.put('/blogpost/:id', (req, res) => {
     // ensure that the id in the request path and the one in request body match
     if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
         const message = (
@@ -109,7 +109,7 @@ app.put('/BlogPost/:id', (req, res) => {
         .catch(err => res.status(500).json({ message: 'Internal server error' }));
 });
 
-app.delete('/BlogPost/:id', (req, res) => {
+app.delete('/blogpost/:id', (req, res) => {
     BlogPost
         .findByIdAndRemove(req.params.id)
         .exec()
