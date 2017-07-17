@@ -5,9 +5,10 @@ const bodyParser = require('body-parser');
 
 const mongoose = require('mongoose');
 
+mongoose.Promise = global.Promise;
 
-const { DATABASE_URL, PORT } = require('./config');
-const { BlogPost } = require('./models');
+const {PORT, DATABASE_URL} = require('./config');
+const {BlogPost} = require('./models');
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use(morgan('common'));
 app.use(bodyParser.json());
 
 
-mongoose.Promise = global.Promise;
+
 // GET requests to /restaurants => return 10 restaurants
 app.get('/blogposts', (req, res) => {
     const filters = {};
