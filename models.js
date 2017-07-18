@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 
 
 const blogPostSchema = mongoose.Schema({
-  title: {type: String, required: true},
-  content: {type: String, required:true},
   author: {
     lastName: String,
     firstName: String,
     },
+  title: {type: String, required: true},
+  content: {type: String},
   created: {type: Date, default: Date.now}
 });
 
@@ -22,7 +22,7 @@ blogPostSchema.methods.apiRepr = function() {
     author: this.author,
     created: this.created
   };
-};
+}
 
 // note that all instance methods and virtual properties on our
 // schema must be defined *before* we make the call to `.model`.
